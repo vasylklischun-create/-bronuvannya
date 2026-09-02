@@ -1,0 +1,38 @@
+name: Extract project
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract ZIP
+        run: |
+          set -e
+          mkdir extracted
+          unzip -q bronyuvannya-dat.zip -d extracted
+          PACKAGE=$(find extracted -name package.json -type f | head -1)
+          if [ -z "$PACKAGE" ]; then
+            echo "package.json not found"
+            exit 1
+          fi
+          ROOT=$(dirname "$PACKAGE")
+          cp -R "$ROOT"/. .
+          rm -rf extracted
+          rm -f bronyuvannya-dat.zip
+
+      - name: Commit extracted project
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add -A
+          git commit -m "Extract booking project" || echo "Nothing to commit"
+          git push
